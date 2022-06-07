@@ -16,8 +16,6 @@ class truss():
 
         self.mem_forces, self.matrix = self.solve()
 
-        self.print()
-
     def solve(self):
 
         forces = []
@@ -83,9 +81,7 @@ class truss():
     def print(self):
 
         print('')
-        for row in self.matrix: 
-            frmt = "{:>4}"*len(row)
-            print(frmt.format(*row))
+        print(np.matrix(self.matrix))
 
         print('')
         for i, force in enumerate(self.mem_forces):
@@ -208,6 +204,7 @@ applied_forces = [
 ]
 
 bridge = truss(joints, pin_and_roller, connections, applied_forces)
-
 graphics = vis_output(bridge)
+
+bridge.print()
 graphics.out()
