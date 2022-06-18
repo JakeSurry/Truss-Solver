@@ -2,23 +2,28 @@ import pygame as pg
 pg.init()
 import numpy as np
 
+import bots
+
 class truss():
 
     def __init__(self, joints, pin_and_roller, connections, applied_forces):
 
         self.joints = joints
         self.members = []
-        for i, connection in enumerate(connections):
-            self.members.append([i, joints[connection[0]-1], joints[connection[1]-1]])
+
         self.pin = ((pin_and_roller[0]-1)*2)
         self.roller = ((pin_and_roller[1]-1)*2)
+
+        for i, connection in enumerate(connections):
+            self.members.append([i, joints[connection[0]-1], joints[connection[1]-1]])
+
         self.applied_forces = applied_forces
 
         self.mem_forces, self.matrix = self.solve()
 
     def solve(self):
 
-        forces = []
+        force_matrix = []
         for joint in self.joints:
 
             #Creates an array full of zeros for the x and y forces
@@ -34,8 +39,11 @@ class truss():
             for mem in rel_mem:
 
                 #Finds angle between point of reference (horizontal line) and the member
-                theta = abs(np.arctan((mem[2][1]-mem[1][1])/(mem[2][0]-mem[1][0])))
-                
+                try:
+                    theta = abs(np.arctan((mem[2][1]-mem[1][1])/(mem[2][0]-mem[1][0])))
+                except ZeroDivisionError:
+                    theta = 0
+
                 #Gets direction (tension or compression) of member
                 x, y = self.get_dir(joint, mem)
 
@@ -44,20 +52,23 @@ class truss():
                 x_force[mem[0]] = np.cos(theta)*x
                 y_force[mem[0]] = np.sin(theta)*y
 
-            forces.append(x_force)
-            forces.append(y_force)
+            force_matrix.append(x_force)
+            force_matrix.append(y_force)
 
         #Adds anchors
-        forces[self.pin][-3] = 1
-        forces[self.pin+1][-2] = 1
-        forces[self.roller+1][-1] = 1
+        force_matrix[self.pin][-3] = 1
+        force_matrix[self.pin+1][-2] = 1
+        force_matrix[self.roller+1][-1] = 1
 
         #Creates applied force B vector
-        applied = [0 for _ in range(len(self.members)+3)]
+        applied = [0 for _ in range(len(self.joints)*2)]
         for force in applied_forces:
             applied[force[0]*2-1] = force[1]
-        
-        return np.linalg.solve(forces, applied), forces
+
+        #Calculates force values, however if the matrix is singular, it informs the user and generalizes the inverse
+        forces = np.dot(np.linalg.pinv(force_matrix), applied)
+
+        return forces, force_matrix
 
     def get_dir(self, joint, mem):
     
@@ -81,7 +92,7 @@ class truss():
     def print(self):
 
         print('')
-        print(np.matrix(self.matrix))
+        print(np.matrix(np.round(self.matrix, 4)))
 
         print('')
         for i, force in enumerate(self.mem_forces):
@@ -94,7 +105,8 @@ class truss():
             else:
                 print(f'Mem {i+1}: {round(force, 3)}')
 
-        print('')
+        if np.linalg.det(self.matrix) == 0:
+            print('\nSingular Matrix Encountered, Generalized Solution Provided')
 
 class vis_output():
 
@@ -137,11 +149,15 @@ class vis_output():
         #then applies that scaler to either blue or red, blue for tension and red for compression
         for i, member in enumerate(members):
             intensity = 1500/(-abs(mf[i])-10)+150
-            if mf[i] <= 0:
-                color = (100+intensity, 10, 10)
+            f = round(mf[i], 2)
+            if f < 0:
+                color = (100+intensity, 0, 0)
+            elif f > 0:
+                color = (0, 0, 100+intensity)
             else:
-                color = (10, 10, 100+intensity)
+                color = (150, 0, 150)
             pg.draw.line(truss_surface, color, (member[1][0]*20, member[1][1]*20), (member[2][0]*20, member[2][1]*20), 5)
+
 
         #Draws all the joints
         for joint in joints:
@@ -179,6 +195,7 @@ class vis_output():
                 if event.type == pg.QUIT:
                     run = False
 
+
 joints = [
 [4, 4],   #1
 [16, 13], #2
@@ -203,6 +220,19 @@ applied_forces = [
 [2, 10]
 ]
 
+
+'''
+pin_and_roller = [(1, 5), (60, 5)]
+applied_forces = [(30, 30)]
+
+ai = bots.washington()
+joints, connections = ai.build(pin_and_roller, applied_forces)
+
+pin_and_roller = [1, 2]
+applied_forces = [
+[3, 10]
+]
+'''
 bridge = truss(joints, pin_and_roller, connections, applied_forces)
 graphics = vis_output(bridge)
 
