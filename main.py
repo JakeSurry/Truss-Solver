@@ -92,21 +92,30 @@ class vis_output():
                 if event.type == pg.QUIT:
                     run = False
 joints = [
-[4, 2],   #1
-[24, 36.341], #2
-[44, 2]  #3
+[4, 4],   #1
+[16, 13], #2
+[28, 4],  #3
+[40, 13], #4
+[52, 4],  #5
+[20, 22]
 ]
 
-pin_and_roller = [1, 3]
+pin_and_roller = [1, 5]
 
 connections = [
 [1, 2],  #1
 [1, 3],  #2
-[2, 3]  #3
+[2, 3],  #3
+[2, 4],  #4
+[3, 4],  #5
+[3, 5],  #6
+[4, 5],  #7
+[2, 6],
+[4, 6]
 ]
 
 applied_forces = [
-[2, 10]
+[6, 10]
 ]
 """
 joints = [
@@ -130,7 +139,7 @@ applied_forces = [
 """
 
 
-bridge = mojmatrix.truss(joints, pin_and_roller, connections, applied_forces)
+bridge = mojlinear.truss(joints, pin_and_roller, connections, applied_forces)
 
-graphics = vis_output(bridge)
-graphics.out()
+#graphics = vis_output(bridge)
+#graphics.out()

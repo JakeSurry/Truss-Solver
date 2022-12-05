@@ -35,7 +35,7 @@ class truss():
         i = 0
         complete = 0
 
-        while complete != len(self.members):
+        while complete != len(self.joints)-1:
             
             joint = self.joints[i]
 
@@ -47,47 +47,26 @@ class truss():
             x_unk_mem = None
             
             for mem in rel_mem:
-                if mem.force == None and mem.theta != 0 and mem.theta != 90:
+                if mem.force == None and mem.theta != 0:
                     y_unk += 1
-                    x_unk += 1
                     y_unk_mem = mem
-                    x_unk_mem = mem
-                elif mem.theta != 0 and mem.theta != 90:
+                elif mem.theta != 0:
                     y_total += mem.force*np.sin(mem.theta)
                     x_total += mem.force*np.cos(mem.theta)
-                elif mem.force != None and mem.theta == 0:
+                elif mem.force != None:
                     x_total += mem.force*np.cos(mem.theta)
-                elif mem.force != None and mem.theta == 90:
-                    y_total += mem.force*np.sin(mem.theta)
                 if mem.force == None and mem.theta == 0:
-                    x_unk += 1
                     x_unk_mem = mem
-                elif mem.force == None and mem.theta == 90:
-                    y_unk += 1
-                    y_unk_mem = mem
-
+            
             if y_unk == 1: 
                 
                 y_unk_mem.force = (-y_total-joint.fy)/(np.sin(y_unk_mem.theta))
-                print(f"(Through Y) Mem {y_unk_mem.num}: {round(y_unk_mem.force,3)}")
+                print(f"Mem {y_unk_mem.num}: {round(y_unk_mem.force,3)}")
                 
-                if x_unk == 1:
+                if x_unk_mem != None:
                     x_unk_mem.force = -y_unk_mem.force*np.cos(y_unk_mem.theta)+x_total
-                    print(f"(Through Y) Mem {x_unk_mem.num}: {round(x_unk_mem.force,3)}")
+                    print(f"Mem {x_unk_mem.num}: {round(x_unk_mem.force,3)}")
 
-                    complete += 1
-                complete += 1
-
-            elif x_unk == 1: 
-                
-                x_unk_mem.force = (-x_total-joint.fx)/(np.cos(x_unk_mem.theta))
-                print(f"(Through X1) Mem {x_unk_mem.num}: {round(x_unk_mem.force,3)}")
-                
-                if y_unk == 1:
-                    y_unk_mem.force = -x_unk_mem.force*np.sin(x_unk_mem.theta)+y_total
-                    print(f"(Through X2) Mem {y_unk_mem.num}: {round(y_unk_mem.force,3)}")
-
-                    complete += 1
                 complete += 1
 
             i += 1
